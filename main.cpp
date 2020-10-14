@@ -41,16 +41,32 @@ constexpr int centerY = 420;
 constexpr int fenceX = 50;
 constexpr int fenceY = 200;
 //данне для трав
+constexpr int leftBorderW = WIDTH/2-rx/2-downX-50;
+constexpr int borderH = HEIGHT/2-60+fenceY;
+constexpr int rightBorderW = WIDTH/2+rx/2+downX+50;
+std:: random_device rd; //Датчик случайных чисел
+std:: default_random_engine rnd {rd()};
+std:: uniform_int_distribution <> pointX {0, leftBorderW};
+std:: uniform_int_distribution <> pointXright {rightBorderW, WIDTH-50};
+std:: uniform_int_distribution <> pointY {borderH, HEIGHT};
+std:: uniform_int_distribution <> len {4, 25};
 constexpr int k = 7;
 constexpr int sizeArr = 4;
-int lenght[] = {4, 8, 20, 5};
-int xy[] = {10, 400,
-		50, 567,
-		25, 712,
-		200, 654,
-		128, 390,
-		189, 478,
-		76, 523};
+int lenght[] = {len(rnd), len(rnd), len(rnd), len(rnd)};
+int xyLeft[] = {pointX(rnd), pointY(rnd),
+		pointX(rnd), pointY(rnd),
+		pointX(rnd), pointY(rnd),
+		pointX(rnd), pointY(rnd),
+		pointX(rnd), pointY(rnd),
+		pointX(rnd), pointY(rnd),
+		pointX(rnd), pointY(rnd)};
+int xyRight[] = {pointXright(rnd), pointY(rnd),
+		pointXright(rnd), pointY(rnd),
+		pointXright(rnd), pointY(rnd),
+		pointXright(rnd), pointY(rnd),
+		pointXright(rnd), pointY(rnd),
+		pointXright(rnd), pointY(rnd),
+		pointXright(rnd), pointY(rnd)};
 
 
 
@@ -196,6 +212,11 @@ auto win = std::shared_ptr<SDL_Window>(
 			DrawCircle(ren.get(), WIDTH/2, HEIGHT/2+moveP+ry/2, i);
 		SDL_Rect gate { WIDTH/2 - gateRad, HEIGHT/2+moveP+ry/2, gateRad*2, ry/2};
 		SDL_RenderFillRect(ren.get(), &gate);
+		//ручка к воротам
+		SDL_SetRenderDrawColor(ren.get(), 0, 0, 0, 50);
+		constexpr int handRad = 5;
+		for (int i = handRad; i>0; i--)
+			DrawCircle(ren.get(), WIDTH/2 - gateRad+0.3*gateRad, HEIGHT/2+moveP+ry/2+ry/4, i);
 
 		//пристрой внизу слева
 
@@ -205,6 +226,28 @@ auto win = std::shared_ptr<SDL_Window>(
 		//пристрой внизу справа
 		SDL_Rect downRight { WIDTH/2+rx/2, HEIGHT/2+moveP+(ry-downY), downX, downY};
 		SDL_RenderFillRect(ren.get(), &downRight);
+
+		//окно слева
+		constexpr int gap = 20;
+		constexpr int winX = downX-40;
+		constexpr int winY = downY-40;
+		SDL_Rect winLeft { WIDTH/2-rx/2-downX+gap, HEIGHT/2+moveP+(ry-downY)+gap, winX, winY};
+		SDL_SetRenderDrawColor(ren.get(), 186, 255, 249, 255);
+		SDL_RenderFillRect(ren.get(), &winLeft);
+		//окно справа
+		SDL_Rect winRight { WIDTH/2+rx/2+gap, HEIGHT/2+moveP+(ry-downY)+gap, winX, winY};
+		SDL_RenderFillRect(ren.get(), &winRight);
+		SDL_SetRenderDrawColor(ren.get(), 0, 0, 0, 255);
+		//горизонтальные линии нв окнах
+		SDL_RenderDrawLine(ren.get(), WIDTH/2-rx/2-downX+gap, HEIGHT/2+moveP+(ry-downY)+3*gap,
+				WIDTH/2-rx/2-downX+gap+winX, HEIGHT/2+moveP+(ry-downY)+3*gap);
+		SDL_RenderDrawLine(ren.get(), WIDTH/2+rx/2+gap, HEIGHT/2+moveP+(ry-downY)+3*gap,
+						WIDTH/2+rx/2+downX-gap, HEIGHT/2+moveP+(ry-downY)+3*gap);
+		//вертикальные линии на окнах
+		SDL_RenderDrawLine(ren.get(), WIDTH/2-rx/2-downX/2, HEIGHT/2+moveP+(ry-downY)+gap,
+						WIDTH/2-rx/2-downX/2, HEIGHT/2+moveP+(ry-downY)+gap+winY);
+		SDL_RenderDrawLine(ren.get(), WIDTH/2+rx/2+downX/2, HEIGHT/2+moveP+(ry-downY)+gap,
+								WIDTH/2+rx/2+downX/2, HEIGHT/2+moveP+(ry-downY)+gap+winY);
 
 		//крыша боьшая
 		constexpr int bigRoof = 150;
@@ -244,54 +287,28 @@ auto win = std::shared_ptr<SDL_Window>(
 
 			constexpr int space = 10;
 			int x;
+			int xRight;
 
 			for (int i = 0; i < k*2;i += 2){
-				x = xy[i];
-				for (int j = 0; j <= sizeArr; j++){
-					SDL_RenderDrawLine(ren.get(), x, xy[i+1], x+space/2, xy[i+1]-lenght[j]);
-					SDL_RenderDrawLine(ren.get(), x+space/2, xy[i+1]-lenght[j], x+space, xy[i+1]);
+				x = xyLeft[i];
+				xRight = xyRight[i];
+				for (int j = 0; j < sizeArr; j++){
+					SDL_RenderDrawLine(ren.get(), x, xyLeft[i+1], x+space/2, xyLeft[i+1]-lenght[j]);
+					SDL_RenderDrawLine(ren.get(), x+space/2, xyLeft[i+1]-lenght[j], x+space, xyLeft[i+1]);
+
+					SDL_RenderDrawLine(ren.get(), xRight, xyRight[i+1], xRight+space/2, xyRight[i+1]-lenght[j]);
+					SDL_RenderDrawLine(ren.get(), xRight+space/2, xyRight[i+1]-lenght[j], xRight+space, xyRight[i+1]);
 					x += space;
+					xRight += space;
 
 				}
 			}
-
-
-//		SDL_SetRenderDrawColor(ren.get(), 255, 255, 63, 255);
-//
-//		for (double angle = 0.; angle < 2.*Pi; angle += Pi/720.){
-//			double x = WIDTH/2.+300. * cos(angle);
-//			double y = HEIGHT/2. + 300. * sin(angle);
-//			SDL_RenderDrawPoint(ren.get(), int (x), int(y));
-//		}
-//
-//		SDL_RenderDrawLine(ren.get(), 0, 0, WIDTH-1, HEIGHT-1);
-//
-//
-//		SDL_Rect r { 200, 200, 400, 150};
-//		SDL_SetRenderDrawColor(ren.get(), 127, 0, 0, 255);
-//		SDL_RenderFillRect(ren.get(), &r);
-//
-//		SDL_SetRenderDrawColor(ren.get(),95, 95, 255, 255);
-//		for (int x = 0; x < 800; x++)
-//			SDL_RenderDrawLine(ren.get(), 200+x, 250, 200, 1000-x);
-//
-//		//треугольик
-//		SDL_SetRenderDrawColor(ren.get(),0, 255, 255, 255);
-//		for (int i =0; i< 150; i++){
-//			SDL_RenderDrawLine(ren.get(), 150+i, 500-i*2, 150+i, 500+i);
-//		}
 
 
 
 		SDL_RenderPresent(ren.get());// показ изображения
 
 	}
-
-
-
-
-
-	//SDL_Delay(3000); //дурной тон, задержка
 
 	std::cout << "Конец работы программы" << std::endl;
 
