@@ -19,6 +19,7 @@
 
 #include <SDL2/SDL.h>
 #include <SDL2/SDL_main.h>
+#include <SDL2/SDL_image.h>
 
 
 #include <cmath>
@@ -68,7 +69,32 @@ int xyRight[] = {pointXright(rnd), pointY(rnd),
 		pointXright(rnd), pointY(rnd),
 		pointXright(rnd), pointY(rnd)};
 
+//////////ДАННЫЕ КОТИКОВ//////////////
+//летающий котик
+int flyCat_w = 250;
+int flyCat_x = 0, flyCat_y = 0;
+int flyCat_dx = 4, flyCat_dy = 2;
 
+// котик в окне
+int winCat_w = 957/3, winCat_h = 866/3;
+int winCat1_x = downX-40, winCat1_y = downY-40;
+
+//управляемый котик
+int handCat_w = 1454/6, handCat_h = 1150/6;
+int handCat_x = WIDTH - handCat_w, handCat_y = HEIGHT - handCat_h;
+
+//котик с цветами
+int flowerCat_w = 628/2, flowerCat_h = 640/2;
+int flowerCat_x = 100, flowerCat_y = HEIGHT - flowerCat_h+75;
+//купидон
+int cupidonCat_w = 920*0.33, cupidonCat_h = 744*0.33;
+int cupidonCat_x = 0, cupidonCat_y = 0;
+int cupidonCat_dx = 3;
+
+//данные при дл клавиши пробел
+int step = 6;
+int space_k = 0;
+bool space_f = false;
 
 void DrawCircle (SDL_Renderer * ren, int cx, int cy, int r){
 	//алгоритм Брезенхэма
@@ -115,9 +141,54 @@ auto win = std::shared_ptr<SDL_Window>(
 	}
 
 
+	///картинкИ с котиками////
+	//летающий котик
+	auto flyCat_icon = std::shared_ptr <SDL_Texture>(IMG_LoadTexture(ren.get(), "flyingCat.png"), SDL_DestroyTexture);
+	if (flyCat_icon == nullptr){
+		std::cerr << "Не могу загрузить картинку: " <<
+				SDL_GetError() <<std::endl;
+		return 1;
+	}
+	//котик в окне
+	auto winCat_icon = std::shared_ptr <SDL_Texture>
+			(IMG_LoadTexture(ren.get(), "compCat.png"), SDL_DestroyTexture);
+	if (winCat_icon == nullptr){
+			std::cerr << "Не могу загрузить картинку: " <<
+					SDL_GetError() <<std::endl;
+			return 1;
+		}
+
+	//управляемый котик
+	auto handCat_icon = std::shared_ptr <SDL_Texture>
+		(IMG_LoadTexture(ren.get(), "Cat1.png"), SDL_DestroyTexture);
+	if (handCat_icon == nullptr){
+		std::cerr << "Не могу загрузить картинку: " <<
+				SDL_GetError() <<std::endl;
+		return 1;
+	}
+
+	//котик с цветами
+	auto flowerCat_icon = std::shared_ptr <SDL_Texture>
+		(IMG_LoadTexture(ren.get(), "flowerCat.png"), SDL_DestroyTexture);
+	if (flowerCat_icon == nullptr){
+			std::cerr << "Не могу загрузить картинку: " <<
+					SDL_GetError() <<std::endl;
+			return 1;
+		}
+	//котик купидон
+		auto cupidonCat_icon = std::shared_ptr <SDL_Texture>
+			(IMG_LoadTexture(ren.get(), "cupidonCat.png"), SDL_DestroyTexture);
+		if (cupidonCat_icon == nullptr){
+				std::cerr << "Не могу загрузить картинку: " <<
+						SDL_GetError() <<std::endl;
+				return 1;
+			}
 
 
-	//Основной цикд программы
+	//КЛЮЧИ ДЛЯ УПРАВЛЕНИЯ////////////////////
+	auto keys =SDL_GetKeyboardState(nullptr);
+
+	//Основной цикд программы//////////////////////////////
 	SDL_Event event;// в эту переменнную будем помещвть информацию о каждом следующем событии
 	bool finish = false;
 
@@ -128,6 +199,11 @@ auto win = std::shared_ptr<SDL_Window>(
 			finish = true;
 		}
 
+
+
+
+
+		//РИСОВКА//////////////////
 		SDL_SetRenderDrawColor(ren.get(), 83, 196, 252, 255);    //фон - небо
 		//последний параметр - непрозрачность
 		SDL_RenderClear(ren.get());//отрисовка изображения
@@ -238,16 +314,7 @@ auto win = std::shared_ptr<SDL_Window>(
 		SDL_Rect winRight { WIDTH/2+rx/2+gap, HEIGHT/2+moveP+(ry-downY)+gap, winX, winY};
 		SDL_RenderFillRect(ren.get(), &winRight);
 		SDL_SetRenderDrawColor(ren.get(), 0, 0, 0, 255);
-		//горизонтальные линии нв окнах
-		SDL_RenderDrawLine(ren.get(), WIDTH/2-rx/2-downX+gap, HEIGHT/2+moveP+(ry-downY)+3*gap,
-				WIDTH/2-rx/2-downX+gap+winX, HEIGHT/2+moveP+(ry-downY)+3*gap);
-		SDL_RenderDrawLine(ren.get(), WIDTH/2+rx/2+gap, HEIGHT/2+moveP+(ry-downY)+3*gap,
-						WIDTH/2+rx/2+downX-gap, HEIGHT/2+moveP+(ry-downY)+3*gap);
-		//вертикальные линии на окнах
-		SDL_RenderDrawLine(ren.get(), WIDTH/2-rx/2-downX/2, HEIGHT/2+moveP+(ry-downY)+gap,
-						WIDTH/2-rx/2-downX/2, HEIGHT/2+moveP+(ry-downY)+gap+winY);
-		SDL_RenderDrawLine(ren.get(), WIDTH/2+rx/2+downX/2, HEIGHT/2+moveP+(ry-downY)+gap,
-								WIDTH/2+rx/2+downX/2, HEIGHT/2+moveP+(ry-downY)+gap+winY);
+
 
 		//крыша боьшая
 		constexpr int bigRoof = 150;
@@ -303,6 +370,103 @@ auto win = std::shared_ptr<SDL_Window>(
 
 				}
 			}
+
+			// ОТРИСОВКИ КАРТИНОК///////////////////////////////
+
+			//котик в окне с компьютером
+			if(handCat_x >= WIDTH/2-rx/2-downX and handCat_x <= WIDTH/2-rx/2){
+				SDL_RenderCopy(ren.get(), winCat_icon.get(),
+						nullptr, &winLeft);
+			}
+			//горизонтальные линии нв окнах
+			SDL_RenderDrawLine(ren.get(), WIDTH/2-rx/2-downX+gap, HEIGHT/2+moveP+(ry-downY)+3*gap,
+					WIDTH/2-rx/2-downX+gap+winX, HEIGHT/2+moveP+(ry-downY)+3*gap);
+			SDL_RenderDrawLine(ren.get(), WIDTH/2+rx/2+gap, HEIGHT/2+moveP+(ry-downY)+3*gap,
+							WIDTH/2+rx/2+downX-gap, HEIGHT/2+moveP+(ry-downY)+3*gap);
+			//вертикальные линии на окнах
+			SDL_RenderDrawLine(ren.get(), WIDTH/2-rx/2-downX/2, HEIGHT/2+moveP+(ry-downY)+gap,
+							WIDTH/2-rx/2-downX/2, HEIGHT/2+moveP+(ry-downY)+gap+winY);
+			SDL_RenderDrawLine(ren.get(), WIDTH/2+rx/2+downX/2, HEIGHT/2+moveP+(ry-downY)+gap,
+									WIDTH/2+rx/2+downX/2, HEIGHT/2+moveP+(ry-downY)+gap+winY);
+
+
+			//купидон//
+			cupidonCat_x += cupidonCat_dx;
+			if(cupidonCat_x >= WIDTH - cupidonCat_w or cupidonCat_x < 0)
+				cupidonCat_dx = -cupidonCat_dx;
+			SDL_Rect cupidonCat_rect{cupidonCat_x, cupidonCat_y, cupidonCat_w, cupidonCat_h};
+			SDL_RenderCopy(ren.get(), cupidonCat_icon.get(),
+				nullptr, &cupidonCat_rect);
+
+
+
+			//котик управляемый
+			int pace = 8;
+			int leftB = leftBorderW-handCat_w/2;
+			int rightB = rightBorderW - handCat_w/2;
+			int upB = HEIGHT/2+rx/2;
+			int fenceB = HEIGHT/2;
+			if ((keys[SDL_SCANCODE_RIGHT] and ((handCat_x <= WIDTH - handCat_w and handCat_x >= rightB)
+					or handCat_x <= leftB-pace
+					or (handCat_x <= WIDTH - handCat_w and handCat_y >= upB)))){//нажата стрелка вправо
+				handCat_x += pace;
+			}
+			if (keys[SDL_SCANCODE_LEFT]and ((handCat_x >= 0 and handCat_x <= leftB)
+					or handCat_x >= rightB+pace
+					or (handCat_x >= 0 and handCat_y >= upB))){//нажата стрелка вправо
+				handCat_x -= pace;
+			}
+			if (keys[SDL_SCANCODE_UP] and (handCat_y >= upB+pace
+					or (handCat_x <= leftB and handCat_y >= fenceB)
+					or (handCat_x >= rightB and handCat_y >= fenceB))){//нажата стрелка вправо
+				handCat_y -= pace;
+			}
+			if (keys[SDL_SCANCODE_DOWN] and
+					(handCat_y <= HEIGHT-handCat_h*.66)){//нажата стрелка вправо
+				handCat_y += pace;
+			}
+
+			if (keys[SDL_SCANCODE_SPACE]){
+				space_f = true;
+			}
+
+			if (space_f and space_k != step){
+				handCat_y -= pace*5;
+				space_k++;
+			}
+			else if (space_k > 0){
+				handCat_y += pace*5;
+				space_k--;
+				space_f = false;
+			}
+
+
+
+			SDL_Rect handCat_rect{handCat_x, handCat_y,
+				handCat_w, handCat_h};
+					SDL_RenderCopy(ren.get(), handCat_icon.get(),
+						nullptr, &handCat_rect);
+
+			//летающий котик//
+			flyCat_x += flyCat_dx;
+			flyCat_y += flyCat_dy;
+			if(flyCat_x >= WIDTH - flyCat_w or flyCat_x < 0)
+				flyCat_dx = -flyCat_dx;
+			if(flyCat_y >= HEIGHT - flyCat_w or flyCat_y < 0)
+				flyCat_dy = -flyCat_dy;
+
+			SDL_Rect flyCat_rect{flyCat_x, flyCat_y, flyCat_w, flyCat_w};
+			SDL_RenderCopy(ren.get(), flyCat_icon.get(),
+				nullptr, &flyCat_rect);
+
+			//котик с цветами
+			SDL_Rect flowerCat_rect{flowerCat_x, flowerCat_y,
+				flowerCat_w, flowerCat_h};
+			SDL_RenderCopy(ren.get(), flowerCat_icon.get(),
+					nullptr, &flowerCat_rect);
+
+
+
 
 
 
